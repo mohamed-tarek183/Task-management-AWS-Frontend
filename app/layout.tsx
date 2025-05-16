@@ -4,6 +4,8 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
+import ConfigureAmplifyClientSide from "./amplify-cognito-config"
+
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -22,6 +24,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <ConfigureAmplifyClientSide />
           {children}
           <Toaster />
         </ThemeProvider>
