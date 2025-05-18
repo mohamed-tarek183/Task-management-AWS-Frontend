@@ -1,7 +1,5 @@
 "use client"
-
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import DashboardLayout from "@/components/dashboard-layout"
@@ -17,6 +15,53 @@ import { format } from "date-fns"
 import { CalendarIcon, FileUp } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
+import axios from "axios"
+import { todo } from "node:test"
+
+
+
+
+ export async function uploadFile (file:any,task_id:string){
+  try{
+    const token = localStorage.getItem("id_token")
+    const res = await axios.post(
+      "/api/uploadFile",
+      {
+          file_name:file.name,
+          task_id:task_id
+      },
+      {
+        headers: {
+          Authorization: token,
+        },
+      }
+    )
+
+    console.log(res.data)
+
+    const upload = await axios.put(res.data, file, {
+      headers: {
+        "Content-Type": file.type, // Make sure this matches the file
+      },
+    });
+    
+    
+  
+  
+  }
+
+    
+    catch (err: any) {
+      console.log(err)
+    }
+
+  
+
+
+
+
+
+}
 
 export default function NewTaskPage() {
   const router = useRouter()
@@ -24,32 +69,71 @@ export default function NewTaskPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [date, setDate] = useState<Date | undefined>(undefined)
   const [attachments, setAttachments] = useState<File[]>([])
+  const [priority, setPriority] = useState("medium");
+  const [error, setError] = useState<string | null>(null)
+  const [response,setResponse] =useState<any>(null)
+  let task_id=""
+
+ 
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setIsSubmitting(true)
+    const title = (document.getElementById("title") as HTMLInputElement).value;
+    const description = (document.getElementById("description") as HTMLTextAreaElement).value;
 
-    // This would be replaced with an actual API call to AWS Lambda via API Gateway
+
+
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      toast({
-        title: "Task created",
-        description: "Your task has been created successfully",
-      })
-
-      router.push("/dashboard/tasks")
-    } catch (error) {
-      toast({
-        title: "Error creating task",
-        description: "Please try again later",
-        variant: "destructive",
-      })
-    } finally {
-      setIsSubmitting(false)
-    }
+      const token = localStorage.getItem("id_token")
+      const res = await axios.post("/api/createTask",
+  {
+    "title": title,
+    "description": description,
+    "dueDate":date,
+    "priority":priority
+  },
+  {
+    headers: {
+      Authorization: token,
+    },
   }
+);
+
+  task_id=res.data
+    } catch (err: any) {
+      setError(err.message || "Error Creating Task")
+    }
+
+
+    
+
+  if (attachments) {
+    try{
+      attachments.forEach(async (a)=> await uploadFile(a,task_id))
+  
+    }
+    catch(err: any) {
+        setError(err.message || "Error Uploading Attachment")
+      }
+      
+
+  }
+  
+
+  router.push('/dashboard/tasks')
+
+
+
+
+
+
+  }
+
+
+
+
+  
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -98,9 +182,9 @@ export default function NewTaskPage() {
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="grid gap-2">
+                {/* <div className="grid gap-2">
                   <Label htmlFor="status">Status</Label>
-                  <Select disabled={isSubmitting} defaultValue="todo">
+                  <Select disabled={isSubmitting} defaultValue="todo" onValueChange={setStatus}>
                     <SelectTrigger id="status">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
@@ -110,11 +194,11 @@ export default function NewTaskPage() {
                       <SelectItem value="completed">Completed</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
+                </div> */}
 
                 <div className="grid gap-2">
                   <Label htmlFor="priority">Priority</Label>
-                  <Select disabled={isSubmitting} defaultValue="medium">
+                  <Select disabled={isSubmitting} defaultValue="medium" onValueChange={setPriority}>
                     <SelectTrigger id="priority">
                       <SelectValue placeholder="Select priority" />
                     </SelectTrigger>
@@ -125,27 +209,24 @@ export default function NewTaskPage() {
                     </SelectContent>
                   </Select>
                 </div>
+
+
+                <div className="grid gap-2">
+              <Label htmlFor="dueDate">Due Date</Label>
+              <Input
+                type="date"
+                id="dueDate"
+                value={date ? format(date, "yyyy-MM-dd") : ""}
+                onChange={(e) => setDate(e.target.value ? new Date(e.target.value) : undefined)}
+                disabled={isSubmitting}
+              />
+            </div>
               </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="dueDate">Due Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      id="dueDate"
-                      variant={"outline"}
-                      className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}
-                      disabled={isSubmitting}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {date ? format(date, "PPP") : <span>Select a date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
-                  </PopoverContent>
-                </Popover>
-              </div>
+            
+
+
+              
 
               <div className="grid gap-2">
                 <Label>Attachments</Label>

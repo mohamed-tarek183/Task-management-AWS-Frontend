@@ -2,41 +2,16 @@ import Link from "next/link"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Clock, FileText } from "lucide-react"
+import { Clock, FileText, CheckCircle2 } from "lucide-react" // Added CheckCircle2 icon
 
-interface Task {
-  id: string
-  title: string
-  description: string
-  dueDate: string
-  status: string
-  priority: string
-}
-
-interface TaskCardProps {
-  task: Task
-}
-
-export function TaskCard({ task }: TaskCardProps) {
-  const formatDate = (dateString: string) => {
+export function TaskCard({ task }: any) {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "N/A"
     const options: Intl.DateTimeFormatOptions = { year: "numeric", month: "short", day: "numeric" }
     return new Date(dateString).toLocaleDateString(undefined, options)
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "todo":
-        return "bg-secondary text-secondary-foreground"
-      case "in-progress":
-        return "bg-blue-500 text-white"
-      case "completed":
-        return "bg-green-500 text-white"
-      default:
-        return "bg-secondary text-secondary-foreground"
-    }
-  }
-
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority?: string) => {
     switch (priority) {
       case "high":
         return "bg-red-500 text-white"
@@ -49,42 +24,41 @@ export function TaskCard({ task }: TaskCardProps) {
     }
   }
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "todo":
-        return "To Do"
-      case "in-progress":
-        return "In Progress"
-      case "completed":
-        return "Completed"
-      default:
-        return status
-    }
-  }
-
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
-          <CardTitle className="text-lg font-medium">{task.title}</CardTitle>
-          <Badge className={getStatusColor(task.status)}>{getStatusLabel(task.status)}</Badge>
+          <CardTitle className="text-lg font-medium">{task?.title || "Untitled Task"}</CardTitle>
+          <Badge className={getPriorityColor(task?.priority)}>
+            {task?.priority
+              ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1) + " Priority"
+              : "No Priority"}
+          </Badge>
         </div>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>
-        <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-          <Clock className="h-4 w-4" />
-          <span>Due: {formatDate(task.dueDate)}</span>
-        </div>
-        <div className="mt-2">
-          <Badge variant="outline" className={`${getPriorityColor(task.priority)}`}>
-            {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)} Priority
-          </Badge>
+        <p className="text-sm text-muted-foreground line-clamp-2">{task?.description || "No description available."}</p>
+
+        <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            <span>Due: {formatDate(task?.dueDate)}</span>
+          </div>
+          {task?.completed ? (
+            <Badge variant="outline" className="flex items-center gap-1 bg-green-100 text-green-800">
+              <CheckCircle2 className="h-4 w-4" />
+              Completed
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="flex items-center gap-1 bg-gray-200 text-gray-700">
+              Incomplete
+            </Badge>
+          )}
         </div>
       </CardContent>
       <CardFooter>
         <Button asChild variant="outline" className="w-full">
-          <Link href={`/dashboard/tasks/${task.id}`}>
+          <Link href={`/dashboard/tasks/${task?.task_id || ""}`}>
             <FileText className="mr-2 h-4 w-4" />
             View Details
           </Link>
